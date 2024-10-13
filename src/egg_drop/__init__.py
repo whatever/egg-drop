@@ -35,6 +35,46 @@ def get_secret():
     return secret["user"], secret["pass"]
 
 
+def get_push_over_secret():
+    """Return the user/pass for the workmail account."""
+
+    secret_name = "prod/push-over/key"
+    region_name = "us-east-1"
+
+    session = boto3.session.Session()
+
+    client = session.client(
+        service_name="secretsmanager",
+        region_name=region_name,
+    )
+
+    get_secret_value_response = client.get_secret_value(SecretId=secret_name)
+
+    secret = json.loads(get_secret_value_response["SecretString"])
+
+    return secret["user"], secret["token"]
+
+
+def push_over(message):
+    user, token = get_push_over_secret()
+    import http.client, urllib
+
+    conn = http.client.HTTPSConnection("api.pushover.net:443")
+    conn.request(
+        "POST",
+        "/1/messages.json",
+        urllib.parse.urlencode(
+            {
+                "token": token,
+                "user": user,
+                "message": message,
+            }
+        ),
+        {"Content-type": "application/x-www-form-urlencoded"},
+    )
+    print(conn.getresponse().status)
+
+
 def email(email_recipient, message):
     """Send e-mails to recipients."""
 
@@ -85,6 +125,10 @@ def get_result_path():
 def save_result(x):
     with open(get_result_path(), "w") as hash_file:
         hash_file.write(x)
+
+
+def pushover(message):
+    get_secret()
 
 
 def get_previous_result():
@@ -141,6 +185,7 @@ def check_for_eggs():
 
     print("Changes detected!")
 
+    push_over("EGG DROP! Go to https://danielhalksworth.com/")
     email(["matt@worldshadowgovernment.com"], "Go to https://danielhalksworth.com/")
 
     save_result(md5_hash)
