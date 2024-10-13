@@ -139,7 +139,7 @@ def get_previous_result():
         return hash_file.read().strip()
 
 
-def check_for_eggs():
+def _check_for_eggs():
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -181,7 +181,7 @@ def check_for_eggs():
     previous_hash = get_previous_result()
 
     if md5_hash == previous_hash:
-        raise SystemExit()
+        return
 
     print("Changes detected!")
 
@@ -189,3 +189,11 @@ def check_for_eggs():
     email(["matt@worldshadowgovernment.com"], "Go to https://danielhalksworth.com/")
 
     save_result(md5_hash)
+
+
+def check_for_eggs():
+    try:
+        _check_for_eggs()
+    except Exception as e:
+        print(e)
+        push_over("Got an exception!")
